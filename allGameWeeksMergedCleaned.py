@@ -1,8 +1,5 @@
 import pandas as pd
 
-
-
-
 def seasons2023():
 
     #intialise dataframe
@@ -17,7 +14,7 @@ def seasons2023():
         return cummulativeDF
     
     #Go through each week and add the data to the DF
-    for i in range (1,28):
+    for i in range (1,38):
         try:
             cummulativeDF = add_data(cummulativeDF, i)
         except Exception as e:
@@ -31,11 +28,8 @@ def seasons2023():
     #remove people who played less than half
     cummulativeDF = cummulativeDF[cummulativeDF['name'].isin(numAppearances['name'])]
 
-
     #output/save DF
     cummulativeDF.to_csv('allGameWeekDataMergedCleaned.csv', index=False)
-
-
 
 def allSeasons():
 
@@ -71,12 +65,10 @@ def allSeasons():
 
     cummulativeDF = pd.concat(dfs_to_concat, ignore_index=True)
 
-    print(cummulativeDF)
+    #print(cummulativeDF)
 
     cummulativeDF.rename(columns={'total_points': 'mean'}, inplace=True)
     cummulativeDF["std"]=cummulativeDF["mean"]
-
-
 
     agg_funcs = {'starts': 'sum', 'mean': 'mean', 'std': 'std', 'creativity': 'mean', 'influence': 'mean', 'goals_scored':'mean'}
 
@@ -92,17 +84,80 @@ def allSeasons():
 
 
     numAppearances['ratio'] = numAppearances['starts'] / numAppearances['count']
-    print(numAppearances) 
+    #print(numAppearances) 
     numAppearances = numAppearances[numAppearances['ratio'] >= 1/2]
 
     
     #remove people who played less than half
     numAppearancesFiltered = numAppearances[numAppearances['ratio'] >= 1/2]
 
-
-
     #output/save DF
     numAppearances.to_csv('allHistory.csv', index=False)
+
+def average2022():
+
+    #intialise dataframe
+    cummulativeDF = pd.DataFrame()
+
+    #gets i week data and adds it to the cummulativeDF
+    def add_data (cummulativeDF, currentWeekId):
+        thisWeekDF = pd.DataFrame(pd.read_csv(f"./data/2022-23/gws/gw{currentWeekId}.csv"))
+        thisWeekDF["game_week"] = currentWeekId 
+        
+        cummulativeDF = cummulativeDF._append(thisWeekDF, ignore_index=True)
+        return cummulativeDF
+    
+    #Go through each week and add the data to the DF
+    for i in range (1,38):
+        try:
+            cummulativeDF = add_data(cummulativeDF, i)
+        except Exception as e:
+            print(e)
+
+
+    #find all player who have played more than half avalible games
+    numAppearances= pd.merge(cummulativeDF.groupby('name').agg({'starts': 'sum'}).reset_index(), (cummulativeDF['name'].value_counts().reset_index()), on='name', how='outer')
+    numAppearances['ratio'] = numAppearances['starts'] / numAppearances['count']
+    numAppearances = numAppearances[numAppearances['ratio'] >= 1/3]
+
+    #remove people who played less than third
+    cummulativeDF = cummulativeDF[cummulativeDF['name'].isin(numAppearances['name'])]
+
+    #get averages
+    cummulativeDF = cummulativeDF.groupby('name').agg({
+    'name': 'first',
+    'position': 'first',
+    'team' : 'first',
+    'xP' : 'mean',
+    'assists': 'mean',
+    'bonus': 'mean',
+    'bps': 'mean',
+    'clean_sheets': 'mean',
+    'creativity': 'mean',
+    'element': 'mean',
+    'expected_assists': 'mean',
+    'expected_goal_involvements': 'mean',
+    'expected_goals': 'mean',
+    'expected_goals_conceded': 'mean',
+    'goals_conceded': 'mean',
+    'goals_scored': 'mean',
+    'minutes': 'mean',
+    'opponent_team': 'mean',
+    'own_goals': 'mean',
+    'penalties_missed': 'mean',
+    'red_cards': 'mean',
+    'saves': 'mean',
+    'penalties_missed': 'mean',
+    'selected': 'mean',
+    'threat': 'mean',
+    'total_points': 'mean',
+    'value': 'mean'
+})
+
+    #output/save DF
+    cummulativeDF.to_csv('lastSeasonAverage.csv', index=False)
     
 
-allSeasons()
+#allSeasons()
+#seasons2023()
+average2022()
