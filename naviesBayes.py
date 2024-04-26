@@ -9,7 +9,50 @@ pd.options.mode.chained_assignment = None
 #prior cleaned data
 dataf = pd.DataFrame(pd.read_csv("./allGameWeekDataMergedCleaned.csv"))
 
+#Our implementation of the naive bayes class
+class NaiveBayes:
+    def __init__(self):
+        self.features = list
+        self.likelihood = {}
+        self.class_priors = {}
+        self.pred_priors = {}
+        self.X_train = np.array
+        self.Y_train = np.array
+        self.trainsize = int
+        self.numfeatures = int
+    def fit(self, X, Y):
+        self.features = list(X.columns)
+        self.X_train = X
+        self.Y_train = Y
+        self.trainsize = X.shape[0]
+        self.numfeatures = X.shape[1]
 
+        for feat in self.features:
+            self.likelihood[feat] = {}
+            self.pred_priors[feat] = {}
+
+            for val in np.unique(self.X_train[feat]):
+                self.pred_priors[feat].update({val: 0})
+                for res in np.unique(self.Y_train):
+                    self.likelihood[feat].update({val + '_' + res:0})
+                    self.class_priors.update({res:0})
+    def calc_class_prior(self):
+        for res in np.unique(self.Y_train):
+            res_count = sum(self.Y_train == res)
+            self.class_priors[res] = res_count / self.train_size
+    def calc_likelihood(self):
+        for feat in self.features:
+            for res in np.unique(self.Y_train):
+                res_count = sum(self.y_train == res)
+                feat_likelihood = self.X_train[feat][self.y_train[self.y_train == res].index.values.tolist()].value_counts().to_dict()
+                for val, count in feat_likelihood.items():
+                    self.likelihood[feat][val + '_' + res] = count/res_count
+    def calc_pred_prior(self):
+        for feat in self.features:
+            vals = self.X_train[feat].value_counts().to_dict()
+            for feat_val, count in vals.items():
+                self.pred_priors[feat][feat_val] = count/self.trainsize
+                
 def gnb2023(data):
     #average data by player and keep stats we want to analyse (also add std of points scored)
     averages = data.groupby('name').agg({
