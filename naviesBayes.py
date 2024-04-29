@@ -36,6 +36,9 @@ class NaiveBayes:
                 for res in np.unique(self.Y_train):
                     self.likelihood[feat].update({val + '_' + res:0})
                     self.class_priors.update({res:0})
+        self.calc_class_prior()
+        self.calc_likelihood()
+        self.calc_pred_prior()
     def calc_class_prior(self):
         for res in np.unique(self.Y_train):
             res_count = sum(self.Y_train == res)
@@ -52,7 +55,24 @@ class NaiveBayes:
             vals = self.X_train[feat].value_counts().to_dict()
             for feat_val, count in vals.items():
                 self.pred_priors[feat][feat_val] = count/self.trainsize
-                
+    def predict(self, X):
+        res = []
+        X = np.array(X)
+
+        for query in X:
+            prob_outcome  = {}
+            for outcome in np.unique(self.Y_train):
+                prior = self.class_priors[outcome]
+                likelihood = 1
+                evidence = 1
+                for (feat, feat_val) in zip(self.features, query):
+                    likelihood *= self.likelihoods[feat][feat_val + '_' + outcome]
+                    evidence *= self.pred_priors[feat][feat_val]
+                posterior = (likelihood*prior)/evidence
+                prob_outcome[outcome] = posterior
+            re = max  (prob_outcome, key = lambda x: prob_outcome[x])
+            res.append(re)
+        return np.array(res)
 def gnb2023(data):
     #average data by player and keep stats we want to analyse (also add std of points scored)
     averages = data.groupby('name').agg({
@@ -176,8 +196,6 @@ gnb2023(dataf)
 dataf = pd.DataFrame(pd.read_csv("./allHistory.csv"))
 
 def gnbAll(df):
-
-
     #seasonEntries = [(0,306),(307,618),(619,925),(926,1234),(1235,1541),(1542,1852),(1853,2199),(2200,2538)]
     
     NoSeason = np.array([])
