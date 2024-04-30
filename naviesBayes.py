@@ -147,7 +147,7 @@ def gnbAll(df):
         #testingDF = df.iloc[2200 :2538+1]
 
     trainingDF = df
-    for i in range(22,15,-1):
+    for i in range(22,21,-1):
         NoSeason=np.append(NoSeason,i)
         trainingDF = trainingDF._append(df[df['season'] == f'20{i}-{i+1}'], ignore_index=True)
         #trainingDF=df[df['season'] == f'20{i}-{i+1}']
@@ -196,7 +196,6 @@ def gnbAll(df):
 
         conf_matrix = confusion_matrix(y_test, y_pred)
 
-
         true_positive = conf_matrix[1][1]
         false_positive = conf_matrix[0][1]
         false_negative = conf_matrix[1][0]
@@ -237,6 +236,7 @@ def gnbAll(df):
 
         """
         PercentageCorrect=np.append(PercentageCorrect,(true_predicted_true,false_predicted_false))
+
         #first index is the number of con and Risk secodn is the correctness of naives
     return(NoSeason,PercentageCorrect)
 

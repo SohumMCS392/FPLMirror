@@ -142,9 +142,8 @@ def average2022():
     'goals_conceded': 'mean',
     'goals_scored': 'mean',
     'minutes': 'mean',
-    'opponent_team': 'mean',
     'own_goals': 'mean',
-    'penalties_missed': 'mean',
+    'penalties_saved': 'mean',
     'red_cards': 'mean',
     'saves': 'mean',
     'penalties_missed': 'mean',
@@ -156,8 +155,44 @@ def average2022():
 
     #output/save DF
     cummulativeDF.to_csv('lastSeasonAverage.csv', index=False)
+
+
+def seasons2023NoRemove():
+
+    #intialise dataframe
+    cummulativeDF = pd.DataFrame()
+
+    #gets i week data and adds it to the cummulativeDF
+    def add_data (cummulativeDF, currentWeekId):
+        thisWeekDF = pd.DataFrame(pd.read_csv(f"./data/2023-24/gws/gw{currentWeekId}.csv"))
+        thisWeekDF["game_week"] = currentWeekId 
+        
+        cummulativeDF = cummulativeDF._append(thisWeekDF, ignore_index=True)
+        return cummulativeDF
     
+    #Go through each week and add the data to the DF
+    for i in range (1,38):
+        try:
+            cummulativeDF = add_data(cummulativeDF, i)
+        except Exception as e:
+            print(e)
+
+    #output/save DF
+    cummulativeDF.to_csv('allGameWeekDataMergedCleaned2.csv', index=False) 
+    print("done")
 
 #allSeasons()
 #seasons2023()
-average2022()
+#average2022()
+#seasons2023NoRemove()
+
+
+
+
+
+
+
+
+
+
+
