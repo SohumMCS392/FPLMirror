@@ -9,7 +9,80 @@ pd.options.mode.chained_assignment = None
 #prior cleaned data
 dataf = pd.DataFrame(pd.read_csv("./allGameWeekDataMergedCleaned.csv"))
 
+#Our implementation of the naive bayes class
+class NaiveBayes:
+    def __init__(self):
+        self.features = list
+        self.likelihood = {}
+        self.class_priors = {}
+        self.pred_priors = {}
+        self.X_train = np.array
+        self.Y_train = np.array
+        self.trainsize = int
+        self.numfeatures = int
+    def fit(self, X, Y):
+        self.features = list(X.columns)
+        self.X_train = X
+        self.Y_train = Y
+        self.trainsize = X.shape[0]
+        self.numfeatures = X.shape[1]
 
+        for feat in self.features:
+            self.likelihood[feat] = {}
+            self.pred_priors[feat] = {}
+
+            for val in np.unique(self.X_train[feat]):
+                self.pred_priors[feat].update({val: 0})
+                for res in np.unique(self.Y_train):
+                    self.likelihood[feat].update({round(val, 4).astype(str) + '_' + res.astype(str):0})
+                    self.class_priors.update({res:0})
+        self.calc_class_prior()
+        self.calc_likelihood()
+        self.calc_pred_prior()
+    def calc_class_prior(self):
+        for res in np.unique(self.Y_train):
+            res_count = sum(self.Y_train == res)
+            self.class_priors[res] = res_count / self.trainsize
+    def calc_likelihood(self):
+        for feat in self.features:
+            for res in np.unique(self.Y_train):
+                res_count = sum(self.Y_train == res)
+                feat_likelihood = self.X_train[feat][self.Y_train[self.Y_train == res].index.values.tolist()].value_counts().to_dict()
+                for val, count in feat_likelihood.items():
+                    val_round = round(val, 4)
+                    self.likelihood[feat][str(val_round) + '_' + str(res)] = count/res_count
+    def calc_pred_prior(self):
+        for feat in self.features:
+            vals = self.X_train[feat].value_counts().to_dict()
+            for feat_val, count in vals.items():
+                self.pred_priors[feat][feat_val] = count/self.trainsize
+    def predict(self, X):
+        res = []
+        X = np.array(X)
+
+        for query in X:
+            prob_outcome  = {}
+            for outcome in np.unique(self.Y_train):
+                prior = self.class_priors[outcome]
+                likelihood = 1
+                evidence = 1
+                for (feat, feat_val) in zip(self.features, query):
+                    feat_round = round(feat_val, 4)
+                    key = str(feat_round) + "_" + str(outcome)
+                    if key in self.likelihood[feat]:
+                        likelihood *= self.likelihood[feat][key]
+                    else:
+                        likelihood *= 1e-6
+                    if feat_round in self.pred_priors[feat]:
+                        evidence *= self.pred_priors[feat][feat_round]
+                else:
+                    # Handle unseen feature values (apply Laplace smoothing)
+                    evidence *= 1e-6
+                posterior = (likelihood*prior)/evidence
+                prob_outcome[outcome] = posterior
+            re = max  (prob_outcome, key = lambda x: prob_outcome[x])
+            res.append(re)
+        return np.array(res)
 def gnb2023(data):
     #average data by player and keep stats we want to analyse (also add std of points scored)
     averages = data.groupby('name').agg({
@@ -68,8 +141,10 @@ def gnb2023(data):
     y_test = test['typeConst']
 
     y_pred = (GaussianNB().fit(X_train, y_train)).predict(X_test)
-
-    conf_matrix = confusion_matrix(y_test, y_pred)
+    nb = NaiveBayes()
+    nb.fit(X_train, y_train)
+    y_pred2 = nb.predict(X_test)
+    conf_matrix = confusion_matrix(y_test, y_pred2)
 
 
     true_positive = conf_matrix[1][1]
@@ -133,8 +208,6 @@ gnb2023(dataf)
 dataf = pd.DataFrame(pd.read_csv("./allHistory.csv"))
 
 def gnbAll(df):
-
-
     #seasonEntries = [(0,306),(307,618),(619,925),(926,1234),(1235,1541),(1542,1852),(1853,2199),(2200,2538)]
     
     NoSeason = np.array([])
@@ -191,10 +264,11 @@ def gnbAll(df):
         y_train = trainingDF['typeConst']
         X_test = testingDF[['creativity', 'influence', 'goals_scored']]
         y_test = testingDF['typeConst']
-
+        nb = NaiveBayes()
         y_pred = (GaussianNB().fit(X_train, y_train)).predict(X_test)
-
-        conf_matrix = confusion_matrix(y_test, y_pred)
+        (nb.fit(X_train, y_train))
+        y_pred2 = nb.predict(X_test)
+        conf_matrix = confusion_matrix(y_test, y_pred2)
 
         true_positive = conf_matrix[1][1]
         false_positive = conf_matrix[0][1]

@@ -1,15 +1,19 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+
+dataf = pd.DataFrame(pd.read_csv("./allHistory.csv"))
 #using variable org to define the data 
-def PCAmodel(org):
+def PCAmodel(orgx):
     #1 mean center/normalize the data
     #We will do mean centering by subtracting mean from all features
-    mean = np.mean(org, axis=0)
+
+    mean = np.mean(orgx, axis=0)
     print(mean.shape)
-    mean_data = mean - org
+    mean_data = mean - orgx
 
     #2 compute the covariance matrix
-    mat = np.cov(mean_data.T)
+    cov = np.cov(mean_data.T)
     mat = np.round(cov,2)
     print("covariance matrix", mat.shape)
 
@@ -45,3 +49,4 @@ def PCAmodel(org):
     print(pca_trans.shape)
 
     #6 Plot the original data, mean centred data and transformed data in three plots
+PCAmodel(dataf)
